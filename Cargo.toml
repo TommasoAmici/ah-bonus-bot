@@ -2,3 +2,5 @@
 
 members = ["crates/*"]
 
+[profile.dev.package.sqlx-macros]
+opt-level = 3
