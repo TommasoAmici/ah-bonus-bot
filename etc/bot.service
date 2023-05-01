@@ -1,0 +1,18 @@
+[Unit]
+Description=AH Bonus Telegram Bot
+
+[Service]
+Type=simple
+User=ah_bonus_bot
+Group=ah_bonus_bot
+ExecStart=/XXX/bot --db-url sqlite:/XXX.db --token XXX
+Restart=on-failure
+RestartSec=10s
+StartLimitIntervalSec=60
+ProtectSystem=strict
+PrivateTmp=yes
+PrivateUsers=yes
+ProtectHostname=yes
+
+[Install]
+WantedBy=multi-user.target

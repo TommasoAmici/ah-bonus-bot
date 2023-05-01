@@ -1,0 +1,9 @@
+[Unit]
+Description=AH Bonus weekly notification
+
+[Timer]
+Persistent=true
+OnCalendar=Mon *-*-* 10:00:00
+
+[Install]
+WantedBy=timers.target

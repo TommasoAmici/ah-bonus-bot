@@ -1,0 +1,11 @@
+[Unit]
+Description=AH Bonus Bot fetch prices and send notifications of discounts 
+
+[Service]
+Type=oneshot
+User=ah_bonus_bot
+Group=ah_bonus_bot
+ExecStart=/XXX/notify --db-url sqlite:/XXX.db --token XXX
+
+[Install]
+WantedBy=multi-user.target
