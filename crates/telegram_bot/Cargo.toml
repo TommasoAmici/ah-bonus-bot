@@ -7,6 +7,10 @@ edition = "2021"
 name = "bot"
 path = "src/bot.rs"
 
+[[bin]]
+name = "notify"
+path = "src/notify.rs"
+
 [dependencies]
 ah_api = { path = "../ah_api" }
 
