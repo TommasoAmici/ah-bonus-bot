@@ -13,8 +13,6 @@ use teloxide::{
 pub struct Cli {
     #[arg(short = 'd', long = "db-url", default_value = "sqlite:ah_bonus.db")]
     pub db_url: String,
-    #[arg(short = 't', long = "token", default_value = "TELEGRAM_BOT_TOKEN")]
-    pub token: String,
 }
 
 #[tokio::main]
@@ -77,8 +75,7 @@ async fn get_current_prices(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     log::info!("Notifying users of discounts");
 
-    let args = Cli::parse();
-    let bot = Bot::new(args.token);
+    let bot = Bot::from_env();
 
     let to_notify = get_discounted_products(pool).await?;
 

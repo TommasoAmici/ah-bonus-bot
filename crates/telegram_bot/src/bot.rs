@@ -14,8 +14,6 @@ use teloxide::{
 pub struct Cli {
     #[arg(short = 'd', long = "db-url", default_value = "sqlite:ah_bonus.db")]
     pub db_url: String,
-    #[arg(short = 't', long = "token", default_value = "TELEGRAM_BOT_TOKEN")]
-    pub token: String,
 }
 
 #[derive(BotCommands, Clone)]
@@ -48,7 +46,7 @@ async fn main() {
         .await
         .expect("Migrations failed");
 
-    let bot = Bot::new(args.token);
+    let bot = Bot::from_env();
 
     let command_handler = Update::filter_message()
         .filter_command::<Command>()

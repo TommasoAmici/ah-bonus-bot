@@ -17,10 +17,12 @@ db_prepare:
 	cargo sqlx prepare --workspace -- --all-features --all-targets
 # TELEGRAM BOT
 include .env
-ENV = RUST_LOG=debug TELOXIDE_TOKEN=${TELOXIDE_TOKEN}
+ENV = RUST_LOG=debug
+RUN_BOT = ${ENV} cargo run -p telegram_bot
+RUN_BOT_FLAGS = -d ${DATABASE_URL}
 run:
-	${ENV} cargo run -p telegram_bot --bin bot -- -d ${DATABASE_URL}
+	${RUN_BOT} --bin bot -- ${RUN_BOT_FLAGS}
 
 notify:
-	${ENV} cargo run -p telegram_bot --bin notify -- -d ${DATABASE_URL}
+	${RUN_BOT} --bin notify -- ${RUN_BOT_FLAGS}
 
