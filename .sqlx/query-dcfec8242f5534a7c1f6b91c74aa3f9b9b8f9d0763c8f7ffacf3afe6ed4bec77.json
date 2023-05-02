@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO products (id, name, brand, unit, url, image_url)\nVALUES (?1, ?2, ?3, ?4, ?5, ?6);\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "dcfec8242f5534a7c1f6b91c74aa3f9b9b8f9d0763c8f7ffacf3afe6ed4bec77"
+}

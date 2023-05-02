@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO tracked_products (product_id, chat_id)\nVALUES (?1, ?2);\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "f9ab9e5aec532ab865f32a5f420177e7594e352bc722469670892fdf5efc1835"
+}

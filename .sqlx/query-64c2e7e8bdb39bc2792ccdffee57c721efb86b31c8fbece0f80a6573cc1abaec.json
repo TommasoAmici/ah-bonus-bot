@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT DISTINCT ph.product_id,\n  ph.price,\n  ph.discount AS \"discount!: String\",\n  tp.chat_id,\n  p.name,\n  p.url,\n  p.image_url\nFROM products_history ph\n  JOIN tracked_products tp ON ph.product_id = tp.product_id\n  JOIN products p ON ph.product_id = p.id\nWHERE ph.created_at > DATETIME('now', '-1 day')\n  AND ph.discount IS NOT NULL\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "product_id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "price",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "discount!: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "chat_id",
+        "ordinal": 3,
+        "type_info": "Int64"
+      },
+      {
+        "name": "name",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "url",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "image_url",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "64c2e7e8bdb39bc2792ccdffee57c721efb86b31c8fbece0f80a6573cc1abaec"
+}
