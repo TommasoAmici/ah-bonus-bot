@@ -194,8 +194,8 @@ pub struct Contact {
 #[serde(rename_all = "camelCase")]
 pub struct CommunicationChannel {
     #[serde(rename = "type")]
-    pub type_field: String,
-    pub value: url::Url,
+    pub type_field: String, // TODO: enum "TELEPHONE" | "EMAIL"
+    pub value: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
