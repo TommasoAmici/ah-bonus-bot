@@ -105,7 +105,7 @@ pub struct Meta {
     pub description: Description,
     pub nutritions: Vec<Nutrition>,
     pub contents: Contents,
-    pub ingredients: Ingredients,
+    pub ingredients: Option<Ingredients>,
     pub storage: Storage,
     pub origin: Option<Origin>,
     pub contact: Contact,
@@ -151,8 +151,8 @@ pub struct Contents {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Ingredients {
-    pub allergens: Allergens,
-    pub statement: String,
+    pub allergens: Option<Allergens>,
+    pub statement: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
