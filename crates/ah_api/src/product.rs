@@ -52,7 +52,7 @@ pub struct Shield {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Price {
-    pub unit_info: UnitInfo,
+    pub unit_info: Option<UnitInfo>,
     pub theme: Option<String>,
     pub now: f64,
     pub was: Option<f64>,
@@ -107,7 +107,7 @@ pub struct Meta {
     pub contents: Contents,
     pub ingredients: Ingredients,
     pub storage: Storage,
-    pub origin: Origin,
+    pub origin: Option<Origin>,
     pub contact: Contact,
     pub resources: Resources,
 }
@@ -248,7 +248,7 @@ pub struct Product {
     pub description_full: String,
     pub taxonomy_id: i64,
     pub taxonomies: Vec<Taxonomy>,
-    pub contribution_margin: i64,
+    pub contribution_margin: Option<i64>,
     pub properties: Properties,
 }
 
