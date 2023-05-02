@@ -82,9 +82,19 @@ async fn callback_query_handler(
                 .expect("No product found");
             let insert_product = insert_product(&pool, product).await;
             if insert_product.is_err() {
-                log::error!("Failed to insert product {}", product.id);
-                bot.send_message(chat_id, format!("Failed to track {}", product.title))
-                    .await?;
+                match insert_product.err().unwrap() {
+                    sqlx::Error::Database(e) => {
+                        if e.is_unique_violation() {
+                            bot.send_message(chat_id, "Already tracking this product")
+                                .await?;
+                        }
+                    }
+                    _ => {
+                        log::error!("Failed to insert product {}", product.id);
+                        bot.send_message(chat_id, format!("Failed to track {}", product.title))
+                            .await?;
+                    }
+                }
                 return Ok(());
             }
             let insert_tracking = insert_product_tracking(&pool, product.id, chat_id.0).await;
