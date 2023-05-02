@@ -19,3 +19,33 @@ jobs:
       - run: cargo build --verbose --release
       - run: cargo test --verbose --release
 
+      - name: rsync bot
+        uses: burnett01/rsync-deployments@5.2
+        with:
+          switches: -avzrP --delete
+          path: target/release/bot
+          remote_path: /apps/ah_bonus_bot/bot
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_KEY }}
+
+      - name: rsync notify
+        uses: burnett01/rsync-deployments@5.2
+        with:
+          switches: -avzrP --delete
+          path: target/release/notify
+          remote_path: /apps/ah_bonus_bot/notify
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_KEY }}
+
+      - name: Restart service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: sudo systemctl restart ah_bonus_bot.service
