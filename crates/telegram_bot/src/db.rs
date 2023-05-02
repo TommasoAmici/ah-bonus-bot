@@ -52,6 +52,20 @@ pub async fn insert_product_tracking(
         .await
 }
 
+pub async fn delete_product_tracking(
+    pool: &SqlitePool,
+    product_id: i64,
+    chat_id: i64,
+) -> Result<SqliteQueryResult, Error> {
+    sqlx::query_file!(
+        "src/queries/delete_product_tracking.sql",
+        product_id,
+        chat_id
+    )
+    .execute(pool)
+    .await
+}
+
 pub async fn get_all_product_ids(pool: &SqlitePool) -> Result<Vec<i64>, Error> {
     sqlx::query_scalar!("SELECT id FROM products")
         .fetch_all(pool)

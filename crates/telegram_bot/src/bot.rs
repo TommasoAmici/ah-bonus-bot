@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use ah_api::search::search_products;
 
 use clap::Parser;
 use sqlx::SqlitePool;
-use telegram_bot::db::{insert_product, insert_product_tracking};
+use telegram_bot::db::{delete_product_tracking, insert_product, insert_product_tracking};
 use teloxide::{
     prelude::*,
     types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile},
@@ -65,54 +67,153 @@ async fn main() {
         .await;
 }
 
+enum Action {
+    TrackProduct = 0,
+    StopTrackingProduct = 1,
+}
+
+impl FromStr for Action {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "0" => Ok(Action::TrackProduct),
+            "1" => Ok(Action::StopTrackingProduct),
+            _ => Err(()),
+        }
+    }
+}
+
 async fn callback_query_handler(
     bot: Bot,
     q: CallbackQuery,
     pool: SqlitePool,
 ) -> ResponseResult<()> {
-    let product_id = q.data;
-    let chat_id = q.message.unwrap().chat.id;
-    match product_id {
-        Some(id) => {
-            let product_response = ah_api::product::get_product(id.as_str()).await?;
-            let product = product_response
-                .card
-                .products
-                .first()
-                .expect("No product found");
-            let insert_product = insert_product(&pool, product).await;
-            if insert_product.is_err() {
-                match insert_product.err().unwrap() {
-                    sqlx::Error::Database(e) => {
-                        if e.is_unique_violation() {
-                            bot.send_message(chat_id, "Already tracking this product")
-                                .await?;
-                        }
-                    }
-                    _ => {
-                        log::error!("Failed to insert product {}", product.id);
-                        bot.send_message(chat_id, format!("Failed to track {}", product.title))
-                            .await?;
-                    }
-                }
-                return Ok(());
-            }
-            let insert_tracking = insert_product_tracking(&pool, product.id, chat_id.0).await;
-            if insert_tracking.is_err() {
-                log::error!("Failed to insert product {}", product.id);
-                bot.send_message(chat_id, format!("Failed to track {}", product.title))
-                    .await?;
-                return Ok(());
-            }
-            bot.send_message(
-                chat_id,
-                format!("Started tracking prices for {}", product.title),
-            )
-            .await?;
-            Ok(())
-        }
-        None => Ok(()),
+    let text = q.data;
+    if text.is_none() {
+        return Ok(());
     }
+    let text = text.unwrap();
+
+    let message = q.message;
+    if message.is_none() {
+        return Ok(());
+    }
+    let message = message.unwrap();
+
+    let (action, product_id) = text.split_once(":").expect("Invalid callback query");
+    let parsed_action: Action = action.parse::<Action>().expect("Invalid action");
+
+    match parsed_action {
+        Action::TrackProduct => track_product(&bot, &message, &pool, product_id).await,
+        Action::StopTrackingProduct => {
+            stop_tracking_product(&bot, &message, &pool, product_id).await
+        }
+    }
+}
+
+fn create_track_keyboard(product_id: i64) -> InlineKeyboardMarkup {
+    let button = InlineKeyboardButton::new(
+        "Track",
+        teloxide::types::InlineKeyboardButtonKind::CallbackData(format!(
+            "{}:{}",
+            Action::TrackProduct as u8,
+            product_id
+        )),
+    );
+    InlineKeyboardMarkup::default().append_row(vec![button])
+}
+
+fn create_stop_track_keyboard(product_id: i64) -> InlineKeyboardMarkup {
+    let button = InlineKeyboardButton::new(
+        "Stop tracking",
+        teloxide::types::InlineKeyboardButtonKind::CallbackData(format!(
+            "{}:{}",
+            Action::StopTrackingProduct as u8,
+            product_id
+        )),
+    );
+    InlineKeyboardMarkup::default().append_row(vec![button])
+}
+
+async fn track_product(
+    bot: &Bot,
+    msg: &Message,
+    pool: &SqlitePool,
+    product_id: &str,
+) -> ResponseResult<()> {
+    let chat_id = &msg.chat.id;
+
+    let product_response = ah_api::product::get_product(product_id).await?;
+    let product = product_response
+        .card
+        .products
+        .first()
+        .expect("No product found");
+
+    let insert_product = insert_product(&pool, product).await;
+    if insert_product.is_err() {
+        match insert_product.err().unwrap() {
+            sqlx::Error::Database(e) => {
+                if e.is_unique_violation() {
+                    bot.send_message(*chat_id, "Already tracking this product")
+                        .await?;
+                }
+            }
+            _ => {
+                log::error!("Failed to insert product {}", product.id);
+                bot.send_message(*chat_id, format!("Failed to track {}", product.title))
+                    .await?;
+            }
+        }
+        return Ok(());
+    }
+
+    let insert_tracking = insert_product_tracking(&pool, product.id, chat_id.0).await;
+    if insert_tracking.is_err() {
+        log::error!("Failed to insert product {}", product.id);
+        bot.send_message(*chat_id, format!("Failed to track {}", product.title))
+            .await?;
+        return Ok(());
+    }
+    bot.send_message(*chat_id, format!("Started tracking {}", product.title))
+        .await?;
+
+    let keyboard = create_stop_track_keyboard(product.id);
+    bot.edit_message_reply_markup(*chat_id, msg.id)
+        .reply_markup(keyboard)
+        .await?;
+
+    Ok(())
+}
+
+async fn stop_tracking_product(
+    bot: &Bot,
+    msg: &Message,
+    pool: &SqlitePool,
+    product_id: &str,
+) -> ResponseResult<()> {
+    let chat_id = &msg.chat.id;
+    let parsed_product_id = product_id.parse::<i64>().expect("Invalid product id");
+    let delete = delete_product_tracking(&pool, parsed_product_id, chat_id.0).await;
+    match delete {
+        Ok(_) => {
+            bot.send_message(*chat_id, "Stopped tracking product")
+                .await?;
+        }
+        Err(e) => {
+            log::error!("Failed to delete product tracking {}", e);
+            bot.send_message(*chat_id, "Failed to stop tracking product")
+                .await?;
+        }
+    }
+
+    let keyboard = create_track_keyboard(parsed_product_id);
+    bot.edit_message_reply_markup(*chat_id, msg.id)
+        .reply_markup(keyboard)
+        .await?;
+
+    Ok(())
 }
 
 async fn commands_handler(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
@@ -134,11 +235,7 @@ async fn search_endpoint(bot: Bot, msg: Message, query: &String) -> ResponseResu
     for card in search_results.cards {
         let product = card.products.first().unwrap();
 
-        let track_button = InlineKeyboardButton::new(
-            "Track",
-            teloxide::types::InlineKeyboardButtonKind::CallbackData(product.id.to_string()),
-        );
-        let inline_keyboard = InlineKeyboardMarkup::default().append_row(vec![track_button]);
+        let keyboard = create_track_keyboard(product.id);
 
         let image_url = product.images.last().unwrap().url.clone();
         bot.send_photo(msg.chat.id, InputFile::url(image_url))
@@ -146,7 +243,7 @@ async fn search_endpoint(bot: Bot, msg: Message, query: &String) -> ResponseResu
                 "{} - €{} {}",
                 product.title, product.price.now, product.price.unit_size
             ))
-            .reply_markup(inline_keyboard)
+            .reply_markup(keyboard)
             .disable_notification(true)
             .await?;
     }
