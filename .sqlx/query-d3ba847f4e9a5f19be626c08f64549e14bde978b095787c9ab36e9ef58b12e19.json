@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM tracked_products\nWHERE product_id = ?1\n  AND chat_id = ?2\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d3ba847f4e9a5f19be626c08f64549e14bde978b095787c9ab36e9ef58b12e19"
+}
