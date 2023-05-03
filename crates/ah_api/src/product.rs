@@ -277,5 +277,6 @@ pub async fn get_product(product_id: &str) -> Result<ProductResponse, reqwest::E
         "https://www.ah.nl/zoeken/api/products/product?webshopId={}",
         product_id
     );
+    log::info!("Fetching product: {}", url);
     reqwest::get(url).await?.json::<ProductResponse>().await
 }

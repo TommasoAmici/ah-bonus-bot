@@ -46,6 +46,7 @@ pub async fn global_search(query: String, limit: u8) -> Result<SearchResponse, r
     url.query_pairs_mut()
         .append_pair("query", &query)
         .append_pair("limit", limit.to_string().as_str());
+    log::info!("searching: {}", url);
 
     reqwest::get(url).await?.json::<SearchResponse>().await
 }

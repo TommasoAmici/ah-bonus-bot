@@ -143,6 +143,11 @@ async fn track_product(
     product_id: &str,
 ) -> ResponseResult<()> {
     let chat_id = &msg.chat.id;
+    log::info!(
+        "start tracking: product_id={} chat_id={}",
+        product_id,
+        chat_id.0
+    );
 
     let product_response = ah_api::product::get_product(product_id).await?;
     let product = product_response
@@ -158,10 +163,14 @@ async fn track_product(
                 if e.is_unique_violation() {
                     bot.send_message(*chat_id, "Already tracking this product")
                         .await?;
+                } else {
+                    log::error!("Failed to insert product {}. Error: {}", product.id, e);
+                    bot.send_message(*chat_id, format!("Failed to track {}", product.title))
+                        .await?;
                 }
             }
-            _ => {
-                log::error!("Failed to insert product {}", product.id);
+            e => {
+                log::error!("Failed to insert product {}. Error: {}", product.id, e);
                 bot.send_message(*chat_id, format!("Failed to track {}", product.title))
                     .await?;
             }
@@ -195,6 +204,12 @@ async fn stop_tracking_product(
 ) -> ResponseResult<()> {
     let chat_id = &msg.chat.id;
     let parsed_product_id = product_id.parse::<i64>().expect("Invalid product id");
+    log::info!(
+        "stop tracking: product_id={} chat_id={}",
+        product_id,
+        chat_id.0
+    );
+
     let delete = delete_product_tracking(&pool, parsed_product_id, chat_id.0).await;
     match delete {
         Ok(_) => {
@@ -230,6 +245,7 @@ async fn help_endpoint(bot: Bot, msg: Message) -> ResponseResult<()> {
 }
 
 async fn search_endpoint(bot: Bot, msg: Message, query: &String) -> ResponseResult<()> {
+    log::info!("search: query={}", query);
     let search_results = search_products(query, 3).await?;
 
     for card in search_results.cards {

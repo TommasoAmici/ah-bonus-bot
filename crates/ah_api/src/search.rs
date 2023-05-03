@@ -102,6 +102,7 @@ pub async fn search_products(
     url.query_pairs_mut()
         .append_pair("query", &query)
         .append_pair("size", limit.to_string().as_str());
+    log::info!("searching: {}", url);
 
     reqwest::get(url).await?.json::<SearchResults>().await
 }
