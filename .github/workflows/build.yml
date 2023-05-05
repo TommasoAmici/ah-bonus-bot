@@ -19,8 +19,29 @@ jobs:
       - run: cargo build --verbose --release
       - run: cargo test --verbose --release
 
+      - name: Create changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-push: "false"
+          skip-version-file: "true"
+          output-file: "false"
+          skip-commit: "true"
+          skip-on-empty: "true"
+          skip-tag: "true"
+
+      - name: Create Release
+        run: gh release create "$TAG_NAME" --notes "$BODY" target/release/bot target/release/notify
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ steps.changelog.outputs.tag }}
+          BODY: ${{ steps.changelog.outputs.clean_changelog }}
+
       - name: rsync bot
         uses: burnett01/rsync-deployments@5.2
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
         with:
           switches: -avzrP --delete
           path: target/release/bot
@@ -32,6 +53,7 @@ jobs:
 
       - name: rsync notify
         uses: burnett01/rsync-deployments@5.2
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
         with:
           switches: -avzrP --delete
           path: target/release/notify
@@ -43,6 +65,7 @@ jobs:
 
       - name: Restart service
         uses: appleboy/ssh-action@master
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
