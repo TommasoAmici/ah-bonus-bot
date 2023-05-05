@@ -257,6 +257,11 @@ async fn list_endpoint(bot: Throttle<Bot>, msg: Message, pool: &SqlitePool) -> R
     let tracked_products = db::get_all_tracked_products(pool, msg.chat.id.0).await;
     match tracked_products {
         Ok(products) => {
+            if products.len() == 0 {
+                bot.send_message(msg.chat.id, "No tracked products").await?;
+                return Ok(());
+            }
+
             let tracked_products = db::get_all_tracked_products_ids(pool, msg.chat.id.0)
                 .await
                 .unwrap_or_default();
