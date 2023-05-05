@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
 use ah_api::search::search_products;
 
@@ -53,14 +53,14 @@ async fn main() {
     let command_handler = Update::filter_message()
         .filter_command::<Command>()
         .endpoint(commands_handler);
-    let callback_query_handler = Update::filter_callback_query()
-        .endpoint(move |bot, q| callback_query_handler(bot, q, pool.clone()));
+    let callback_query_handler = Update::filter_callback_query().endpoint(callback_query_handler);
 
     let handler = dptree::entry()
         .branch(command_handler)
         .branch(callback_query_handler);
 
     Dispatcher::builder(bot, handler)
+        .dependencies(dptree::deps![pool])
         .enable_ctrlc_handler()
         .build()
         .dispatch()
@@ -231,10 +231,15 @@ async fn stop_tracking_product(
     Ok(())
 }
 
-async fn commands_handler(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
+async fn commands_handler(
+    bot: Bot,
+    msg: Message,
+    cmd: Command,
+    pool: SqlitePool,
+) -> ResponseResult<()> {
     match cmd {
         Command::Help | Command::Start => help_endpoint(bot, msg).await,
-        Command::Search(query) => search_endpoint(bot, msg, &query).await,
+        Command::Search(query) => search_endpoint(bot, msg, &pool, &query).await,
     }
 }
 
@@ -244,14 +249,28 @@ async fn help_endpoint(bot: Bot, msg: Message) -> ResponseResult<()> {
     Ok(())
 }
 
-async fn search_endpoint(bot: Bot, msg: Message, query: &String) -> ResponseResult<()> {
+async fn search_endpoint(
+    bot: Bot,
+    msg: Message,
+    pool: &SqlitePool,
+    query: &String,
+) -> ResponseResult<()> {
     log::info!("search: query={}", query);
     let search_results = search_products(query, 3).await?;
+
+    let tracked_products = db::get_all_tracked_products_ids(pool, msg.chat.id.0)
+        .await
+        .unwrap_or_default();
+    let tracked_products_set = tracked_products.into_iter().collect::<HashSet<_>>();
 
     for card in search_results.cards {
         let product = card.products.first().unwrap();
 
-        let keyboard = create_track_keyboard(product.id);
+        let keyboard = if tracked_products_set.contains(&product.id) {
+            create_stop_track_keyboard(product.id)
+        } else {
+            create_track_keyboard(product.id)
+        };
 
         let image_url = product.images.last().unwrap().url.clone();
         bot.send_photo(msg.chat.id, InputFile::url(image_url))

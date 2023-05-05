@@ -72,6 +72,19 @@ pub async fn get_all_product_ids(pool: &SqlitePool) -> Result<Vec<i64>, Error> {
         .await
 }
 
+/// Returns a list of product IDs that are tracked by the given chat ID.
+pub async fn get_all_tracked_products_ids(
+    pool: &SqlitePool,
+    chat_id: i64,
+) -> Result<Vec<i64>, Error> {
+    sqlx::query_scalar!(
+        "SELECT product_id FROM tracked_products WHERE chat_id = ?",
+        chat_id
+    )
+    .fetch_all(pool)
+    .await
+}
+
 pub struct NotificationDiscount {
     pub name: String,
     pub url: String,
