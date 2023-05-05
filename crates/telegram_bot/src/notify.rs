@@ -4,6 +4,7 @@ use sqlx::SqlitePool;
 use std::{thread, time};
 use telegram_bot::db;
 use teloxide::{
+    adaptors::throttle::Limits,
     prelude::*,
     types::{InputFile, ParseMode},
 };
@@ -75,7 +76,7 @@ async fn get_current_prices(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     log::info!("Notifying users of discounts");
 
-    let bot = Bot::from_env();
+    let bot = Bot::from_env().throttle(Limits::default());
 
     let to_notify = db::get_discounted_products(pool).await?;
 

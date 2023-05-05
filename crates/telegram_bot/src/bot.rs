@@ -6,6 +6,7 @@ use clap::Parser;
 use sqlx::SqlitePool;
 use telegram_bot::db;
 use teloxide::{
+    adaptors::{throttle::Limits, Throttle},
     prelude::*,
     types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile},
     utils::command::BotCommands,
@@ -52,7 +53,7 @@ async fn main() {
         .await
         .expect("Migrations failed");
 
-    let bot = Bot::from_env();
+    let bot = Bot::from_env().throttle(Limits::default());
     bot.set_my_commands(Command::bot_commands())
         .await
         .expect("Failed to set commands");
@@ -92,7 +93,7 @@ impl FromStr for Action {
 }
 
 async fn callback_query_handler(
-    bot: Bot,
+    bot: Throttle<Bot>,
     q: CallbackQuery,
     pool: SqlitePool,
 ) -> ResponseResult<()> {
@@ -144,7 +145,7 @@ fn create_stop_track_keyboard(product_id: i64) -> InlineKeyboardMarkup {
 }
 
 async fn track_product(
-    bot: &Bot,
+    bot: &Throttle<Bot>,
     msg: &Message,
     pool: &SqlitePool,
     product_id: &str,
@@ -202,7 +203,7 @@ async fn track_product(
 }
 
 async fn stop_tracking_product(
-    bot: &Bot,
+    bot: &Throttle<Bot>,
     msg: &Message,
     pool: &SqlitePool,
     product_id: &str,
@@ -234,7 +235,7 @@ async fn stop_tracking_product(
 }
 
 async fn commands_handler(
-    bot: Bot,
+    bot: Throttle<Bot>,
     msg: Message,
     cmd: Command,
     pool: SqlitePool,
@@ -246,13 +247,13 @@ async fn commands_handler(
     }
 }
 
-async fn help_endpoint(bot: Bot, msg: Message) -> ResponseResult<()> {
+async fn help_endpoint(bot: Throttle<Bot>, msg: Message) -> ResponseResult<()> {
     bot.send_message(msg.chat.id, Command::descriptions().to_string())
         .await?;
     Ok(())
 }
 
-async fn list_endpoint(bot: Bot, msg: Message, pool: &SqlitePool) -> ResponseResult<()> {
+async fn list_endpoint(bot: Throttle<Bot>, msg: Message, pool: &SqlitePool) -> ResponseResult<()> {
     let tracked_products = db::get_all_tracked_products(pool, msg.chat.id.0).await;
     match tracked_products {
         Ok(products) => {
@@ -287,7 +288,7 @@ async fn list_endpoint(bot: Bot, msg: Message, pool: &SqlitePool) -> ResponseRes
 }
 
 async fn search_endpoint(
-    bot: Bot,
+    bot: Throttle<Bot>,
     msg: Message,
     pool: &SqlitePool,
     query: &String,
