@@ -49,6 +49,9 @@ async fn main() {
         .expect("Migrations failed");
 
     let bot = Bot::from_env();
+    bot.set_my_commands(Command::bot_commands())
+        .await
+        .expect("Failed to set commands");
 
     let command_handler = Update::filter_message()
         .filter_command::<Command>()
