@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT DISTINCT ph.product_id,\n  ph.price,\n  ph.discount AS \"discount!: String\",\n  ph.discount_start_date > DATE('now') AS \"future_discount\",\n  ph.discount_start_date AS \"discount_start_date!: Date\",\n  ph.discount_end_date AS \"discount_end_date!: Date\",\n  tp.chat_id,\n  p.name,\n  p.url,\n  p.image_url\nFROM products_history ph\n  JOIN tracked_products tp ON ph.product_id = tp.product_id\n  JOIN products p ON ph.product_id = p.id\nWHERE ph.discount_end_date >= DATE('now')\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "product_id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "price",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "discount!: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "future_discount",
+        "ordinal": 3,
+        "type_info": "Int"
+      },
+      {
+        "name": "discount_start_date!: Date",
+        "ordinal": 4,
+        "type_info": "Date"
+      },
+      {
+        "name": "discount_end_date!: Date",
+        "ordinal": 5,
+        "type_info": "Date"
+      },
+      {
+        "name": "chat_id",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "name",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "url",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "image_url",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c54859cd7ccf55adcaa4c92cde4d4505f7d9f796d68b4e0fea611d66edcdffe8"
+}

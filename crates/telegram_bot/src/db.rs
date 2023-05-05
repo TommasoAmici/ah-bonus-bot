@@ -1,6 +1,8 @@
 use ah_api::product::Product;
 
 use sqlx::{sqlite::SqliteQueryResult, Error, SqlitePool};
+use teloxide::utils::markdown::escape;
+use time::Date;
 
 pub async fn insert_product(
     pool: &SqlitePool,
@@ -31,12 +33,21 @@ pub async fn insert_product_history(
     product: &Product,
 ) -> Result<SqliteQueryResult, Error> {
     let price = product.get_price_for_db();
-    let discount = product.get_discount();
+    let discount_text = product.get_discount_text();
+    let (start, end) = match product.discount {
+        None => (None, None),
+        Some(ref discount) => (
+            Some(discount.start_date.clone()),
+            Some(discount.end_date.clone()),
+        ),
+    };
     sqlx::query_file!(
         "src/queries/insert_product_history.sql",
         product.id,
         price,
-        discount
+        discount_text,
+        start,
+        end,
     )
     .execute(pool)
     .await
@@ -111,6 +122,9 @@ pub struct NotificationDiscount {
     pub image_url: String,
     pub product_id: i64,
     pub discount: String,
+    pub future_discount: i32,
+    pub discount_start_date: time::Date,
+    pub discount_end_date: time::Date,
     pub price: i64,
     pub chat_id: i64,
 }
@@ -118,10 +132,23 @@ pub struct NotificationDiscount {
 impl NotificationDiscount {
     /// Returns a markdown formatted message for the Telegram bot.
     pub fn message(&self) -> String {
-        format!(
-            "[{}](https://www.ah.nl{}) is now on discount: {}",
-            self.name, self.url, self.discount
-        )
+        if self.future_discount == 1 {
+            format!(
+                "[{}](https://www.ah.nl{}) will be on discount from {} to {}: {}",
+                self.name,
+                self.url,
+                escape(self.discount_start_date.to_string().as_str()),
+                escape(self.discount_end_date.to_string().as_str()),
+                escape(self.discount.as_str())
+            )
+        } else {
+            format!(
+                "[{}](https://www.ah.nl{}) is now on discount: {}",
+                self.name,
+                self.url,
+                escape(self.discount.as_str())
+            )
+        }
     }
 }
 

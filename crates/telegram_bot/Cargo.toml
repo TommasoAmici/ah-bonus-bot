@@ -19,7 +19,9 @@ sqlx = { version = "0.7.0-alpha.2", features = [
   "sqlite",
   "json",
   "macros",
+  "time",
 ] }
+time = "0.3"
 
 # CLI arguments
 clap = { version = "4.2.1", features = ["derive"] }

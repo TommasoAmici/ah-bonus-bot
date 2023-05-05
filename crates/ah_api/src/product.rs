@@ -258,7 +258,7 @@ impl Product {
         self.discount.is_some()
     }
 
-    pub fn get_discount(&self) -> Option<&String> {
+    pub fn get_discount_text(&self) -> Option<&String> {
         match &self.shield {
             Some(shield) => Some(&shield.text),
             None => None,
