@@ -2,7 +2,7 @@ use ah_api::product::get_product;
 use clap::Parser;
 use sqlx::SqlitePool;
 use std::{thread, time};
-use telegram_bot::db::{get_all_product_ids, get_discounted_products, insert_product_history};
+use telegram_bot::db;
 use teloxide::{
     prelude::*,
     types::{InputFile, ParseMode},
@@ -42,7 +42,7 @@ async fn main() {
 async fn get_current_prices(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     log::info!("Fetching current prices");
 
-    let product_ids = get_all_product_ids(pool).await?;
+    let product_ids = db::get_all_product_ids(pool).await?;
     let one_sec = time::Duration::from_secs(1);
     for product_id in product_ids {
         log::info!("Getting product with ID: {}", product_id);
@@ -53,7 +53,7 @@ async fn get_current_prices(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         let product = get_product(product_id.to_string().as_str()).await;
         match product {
             Ok(resp) => {
-                insert_product_history(
+                db::insert_product_history(
                     pool,
                     &resp
                         .card
@@ -77,7 +77,7 @@ async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error>
 
     let bot = Bot::from_env();
 
-    let to_notify = get_discounted_products(pool).await?;
+    let to_notify = db::get_discounted_products(pool).await?;
 
     for notification in to_notify {
         let message = bot

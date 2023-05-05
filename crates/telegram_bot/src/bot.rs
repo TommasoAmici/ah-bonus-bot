@@ -4,7 +4,7 @@ use ah_api::search::search_products;
 
 use clap::Parser;
 use sqlx::SqlitePool;
-use telegram_bot::db::{delete_product_tracking, insert_product, insert_product_tracking};
+use telegram_bot::db;
 use teloxide::{
     prelude::*,
     types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile},
@@ -156,9 +156,9 @@ async fn track_product(
         .first()
         .expect("No product found");
 
-    let insert_product = insert_product(&pool, product).await;
-    if insert_product.is_err() {
-        match insert_product.err().unwrap() {
+    let insert = db::insert_product(&pool, product).await;
+    if insert.is_err() {
+        match insert.err().unwrap() {
             sqlx::Error::Database(e) => {
                 if e.is_unique_violation() {
                     bot.send_message(*chat_id, "Already tracking this product")
@@ -178,7 +178,7 @@ async fn track_product(
         return Ok(());
     }
 
-    let insert_tracking = insert_product_tracking(&pool, product.id, chat_id.0).await;
+    let insert_tracking = db::insert_product_tracking(&pool, product.id, chat_id.0).await;
     if insert_tracking.is_err() {
         log::error!("Failed to insert product {}", product.id);
         bot.send_message(*chat_id, format!("Failed to track {}", product.title))
@@ -210,7 +210,7 @@ async fn stop_tracking_product(
         chat_id.0
     );
 
-    let delete = delete_product_tracking(&pool, parsed_product_id, chat_id.0).await;
+    let delete = db::delete_product_tracking(&pool, parsed_product_id, chat_id.0).await;
     match delete {
         Ok(_) => {
             bot.send_message(*chat_id, "Stopped tracking product")
