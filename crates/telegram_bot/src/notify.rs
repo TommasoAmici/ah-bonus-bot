@@ -91,7 +91,11 @@ async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error>
             .parse_mode(ParseMode::MarkdownV2)
             .await;
         if message.is_err() {
-            log::error!("Failed to send message to {}", notification.chat_id);
+            log::error!(
+                "Failed to send message to {}. Error: {}",
+                notification.chat_id,
+                message.err().unwrap().to_string()
+            );
         }
     }
 
