@@ -85,6 +85,26 @@ pub async fn get_all_tracked_products_ids(
     .await
 }
 
+pub struct TrackedProduct {
+    pub id: i64,
+    pub name: String,
+    pub url: String,
+    pub image_url: String,
+}
+
+pub async fn get_all_tracked_products(
+    pool: &SqlitePool,
+    chat_id: i64,
+) -> Result<Vec<TrackedProduct>, Error> {
+    sqlx::query_file_as!(
+        TrackedProduct,
+        "src/queries/select_tracked_products.sql",
+        chat_id
+    )
+    .fetch_all(pool)
+    .await
+}
+
 pub struct NotificationDiscount {
     pub name: String,
     pub url: String,

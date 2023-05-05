@@ -30,6 +30,10 @@ enum Command {
     Help,
     #[command(description = "Search for a product.")]
     Search(String),
+    #[command(
+        description = "Get a list of all products you're tracking. The command also allows you to stop tracking a product."
+    )]
+    List,
 }
 
 #[tokio::main]
@@ -238,12 +242,47 @@ async fn commands_handler(
     match cmd {
         Command::Help | Command::Start => help_endpoint(bot, msg).await,
         Command::Search(query) => search_endpoint(bot, msg, &pool, &query).await,
+        Command::List => list_endpoint(bot, msg, &pool).await,
     }
 }
 
 async fn help_endpoint(bot: Bot, msg: Message) -> ResponseResult<()> {
     bot.send_message(msg.chat.id, Command::descriptions().to_string())
         .await?;
+    Ok(())
+}
+
+async fn list_endpoint(bot: Bot, msg: Message, pool: &SqlitePool) -> ResponseResult<()> {
+    let tracked_products = db::get_all_tracked_products(pool, msg.chat.id.0).await;
+    match tracked_products {
+        Ok(products) => {
+            let tracked_products = db::get_all_tracked_products_ids(pool, msg.chat.id.0)
+                .await
+                .unwrap_or_default();
+            let tracked_products_set = tracked_products.into_iter().collect::<HashSet<_>>();
+            for product in products {
+                let keyboard = if tracked_products_set.contains(&product.id) {
+                    create_stop_track_keyboard(product.id)
+                } else {
+                    create_track_keyboard(product.id)
+                };
+
+                let image_url = url::Url::parse(&product.image_url).unwrap();
+                bot.send_photo(msg.chat.id, InputFile::url(image_url))
+                    .caption(product.name)
+                    .reply_markup(keyboard)
+                    .disable_notification(true)
+                    .await?;
+            }
+        }
+        Err(_) => {
+            bot.send_message(
+                msg.chat.id,
+                "Failed to retrieve list of tracked products, try again later",
+            )
+            .await?;
+        }
+    }
     Ok(())
 }
 

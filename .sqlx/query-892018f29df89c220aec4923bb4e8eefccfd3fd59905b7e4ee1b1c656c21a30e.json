@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT p.id,\n  p.name,\n  p.url,\n  p.image_url\nFROM products p\n  JOIN tracked_products tp ON p.id = tp.product_id\nWHERE chat_id = ?1\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "url",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "image_url",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "892018f29df89c220aec4923bb4e8eefccfd3fd59905b7e4ee1b1c656c21a30e"
+}

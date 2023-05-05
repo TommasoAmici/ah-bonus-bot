@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT product_id FROM tracked_products WHERE chat_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "product_id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a42377093dc95c63be3c1444f5fd5329b3640124ce05b7d41451c8bcfd5004a5"
+}
