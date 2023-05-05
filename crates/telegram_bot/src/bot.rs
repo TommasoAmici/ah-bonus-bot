@@ -188,8 +188,6 @@ async fn track_product(
             .await?;
         return Ok(());
     }
-    bot.send_message(*chat_id, format!("Started tracking {}", product.title))
-        .await?;
 
     let keyboard = create_stop_track_keyboard(product.id);
     bot.edit_message_reply_markup(*chat_id, msg.id)
@@ -216,7 +214,9 @@ async fn stop_tracking_product(
     let delete = db::delete_product_tracking(&pool, parsed_product_id, chat_id.0).await;
     match delete {
         Ok(_) => {
-            bot.send_message(*chat_id, "Stopped tracking product")
+            let keyboard = create_track_keyboard(parsed_product_id);
+            bot.edit_message_reply_markup(*chat_id, msg.id)
+                .reply_markup(keyboard)
                 .await?;
         }
         Err(e) => {
@@ -225,11 +225,6 @@ async fn stop_tracking_product(
                 .await?;
         }
     }
-
-    let keyboard = create_track_keyboard(parsed_product_id);
-    bot.edit_message_reply_markup(*chat_id, msg.id)
-        .reply_markup(keyboard)
-        .await?;
 
     Ok(())
 }
