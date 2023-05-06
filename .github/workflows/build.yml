@@ -18,6 +18,12 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --verbose --release
       - run: cargo test --verbose --release
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: |
+            target/release/bot
+            target/release/notify
 
   release:
     runs-on: ubuntu-latest
@@ -25,6 +31,7 @@ jobs:
     needs:
       - build
     steps:
+      - uses: actions/checkout@v3
       - name: Create changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v3
@@ -37,8 +44,14 @@ jobs:
           skip-on-empty: "true"
           skip-tag: "true"
 
+      - uses: actions/download-artifact@v3
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        with:
+          name: artifacts
+          path: artifacts
+
       - name: Create Release
-        run: gh release create "$TAG_NAME" --notes "$BODY" target/release/bot target/release/notify
+        run: gh release create "$TAG_NAME" --notes "$BODY" artifacts/bot artifacts/notify
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -49,21 +62,9 @@ jobs:
         uses: burnett01/rsync-deployments@5.2
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
         with:
-          switches: -avzrP --delete
-          path: target/release/bot
-          remote_path: /apps/ah_bonus_bot/bot
-          remote_host: ${{ secrets.SSH_HOST }}
-          remote_port: ${{ secrets.SSH_PORT }}
-          remote_user: ${{ secrets.SSH_USER }}
-          remote_key: ${{ secrets.SSH_KEY }}
-
-      - name: rsync notify
-        uses: burnett01/rsync-deployments@5.2
-        if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        with:
-          switches: -avzrP --delete
-          path: target/release/notify
-          remote_path: /apps/ah_bonus_bot/notify
+          switches: -avzrP
+          path: artifacts/
+          remote_path: /apps/ah_bonus_bot/
           remote_host: ${{ secrets.SSH_HOST }}
           remote_port: ${{ secrets.SSH_PORT }}
           remote_user: ${{ secrets.SSH_USER }}
