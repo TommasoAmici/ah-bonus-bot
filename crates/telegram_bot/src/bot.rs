@@ -262,16 +262,8 @@ async fn list_endpoint(bot: Throttle<Bot>, msg: Message, pool: &SqlitePool) -> R
                 return Ok(());
             }
 
-            let tracked_products = db::get_all_tracked_products_ids(pool, msg.chat.id.0)
-                .await
-                .unwrap_or_default();
-            let tracked_products_set = tracked_products.into_iter().collect::<HashSet<_>>();
             for product in products {
-                let keyboard = if tracked_products_set.contains(&product.id) {
-                    create_stop_track_keyboard(product.id)
-                } else {
-                    create_track_keyboard(product.id)
-                };
+                let keyboard = create_stop_track_keyboard(product.id);
 
                 let image_url = url::Url::parse(&product.image_url).unwrap();
                 bot.send_photo(msg.chat.id, InputFile::url(image_url))
