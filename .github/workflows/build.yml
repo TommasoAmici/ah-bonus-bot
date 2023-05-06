@@ -19,6 +19,12 @@ jobs:
       - run: cargo build --verbose --release
       - run: cargo test --verbose --release
 
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - build
+    steps:
       - name: Create changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v3
