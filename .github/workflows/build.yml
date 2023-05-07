@@ -78,4 +78,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: sudo systemctl restart ah_bonus_bot.service
+          script: |
+            chmod +x /apps/ah_bonus_bot/bot /apps/ah_bonus_bot/notify
+            sudo systemctl restart ah_bonus_bot.service
