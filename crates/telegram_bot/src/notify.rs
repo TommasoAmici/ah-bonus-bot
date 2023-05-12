@@ -100,5 +100,23 @@ async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error>
         }
     }
 
+    let users_not_notified = db::get_users_not_notified(pool).await?;
+    for user in users_not_notified {
+        let message = bot
+            .send_message(
+                ChatId { 0: user },
+                "None of the products you are tracking are on sale this week",
+            )
+            .parse_mode(ParseMode::MarkdownV2)
+            .await;
+        if message.is_err() {
+            log::error!(
+                "Failed to send message to {}. Error: {}",
+                user,
+                message.err().unwrap().to_string()
+            );
+        }
+    }
+
     Ok(())
 }

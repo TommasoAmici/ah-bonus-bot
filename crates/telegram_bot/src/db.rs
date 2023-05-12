@@ -162,3 +162,12 @@ pub async fn get_discounted_products(
     .fetch_all(pool)
     .await
 }
+
+/// Returns a list of chat IDs that track products that are not on discount.
+/// This is used to send a message to the user that none of the products they
+/// track are on discount.
+pub async fn get_users_not_notified(pool: &SqlitePool) -> Result<Vec<i64>, Error> {
+    sqlx::query_file_scalar!("src/queries/select_users_not_notified.sql")
+        .fetch_all(pool)
+        .await
+}
