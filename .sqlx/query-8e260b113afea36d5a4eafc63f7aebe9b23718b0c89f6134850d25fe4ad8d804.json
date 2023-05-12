@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT DISTINCT tp.chat_id\nFROM tracked_products tp\nWHERE tp.chat_id NOT IN (\n    SELECT tp.chat_id\n    FROM products_history ph\n      JOIN tracked_products tp ON ph.product_id = tp.product_id\n    WHERE ph.discount_end_date >= DATE('now')\n  );\n",
+  "describe": {
+    "columns": [
+      {
+        "name": "chat_id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8e260b113afea36d5a4eafc63f7aebe9b23718b0c89f6134850d25fe4ad8d804"
+}
