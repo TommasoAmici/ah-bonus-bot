@@ -14,6 +14,10 @@ use teloxide::{
 pub struct Cli {
     #[arg(short = 'd', long = "db-url", default_value = "sqlite:ah_bonus.db")]
     pub db_url: String,
+    #[arg(long = "dry-run")]
+    pub dry_run: bool,
+    #[arg(long = "no-fetch")]
+    pub no_fetch: bool,
 }
 
 #[tokio::main]
@@ -31,11 +35,13 @@ async fn main() {
         .await
         .expect("Migrations failed");
 
-    get_current_prices(&pool)
-        .await
-        .expect("Failed to get current prices");
+    if !args.no_fetch {
+        get_current_prices(&pool)
+            .await
+            .expect("Failed to get current prices");
+    }
 
-    notify_users_of_discounts(&pool)
+    notify_users_of_discounts(&pool, args.dry_run)
         .await
         .expect("Failed to notify users of discounts");
 }
@@ -73,7 +79,7 @@ async fn get_current_prices(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+async fn notify_users_of_discounts(pool: &SqlitePool, dry_run: bool) -> Result<(), sqlx::Error> {
     log::info!("Notifying users of discounts");
 
     let bot = Bot::from_env().throttle(Limits::default());
@@ -81,6 +87,15 @@ async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error>
     let to_notify = db::get_discounted_products(pool).await?;
 
     for notification in to_notify {
+        if dry_run {
+            log::info!(
+                "Would have sent message to {}. Message: {}",
+                notification.chat_id,
+                notification.message()
+            );
+            continue;
+        }
+
         let message = bot
             .send_photo(
                 ChatId {
@@ -102,11 +117,13 @@ async fn notify_users_of_discounts(pool: &SqlitePool) -> Result<(), sqlx::Error>
 
     let users_not_notified = db::get_users_not_notified(pool).await?;
     for user in users_not_notified {
+        let msg = "None of the products you are tracking are on sale this week";
+        if dry_run {
+            log::info!("Would have sent message to {}. Message: {}", user, msg);
+            continue;
+        }
         let message = bot
-            .send_message(
-                ChatId { 0: user },
-                "None of the products you are tracking are on sale this week",
-            )
+            .send_message(ChatId { 0: user }, msg)
             .parse_mode(ParseMode::MarkdownV2)
             .await;
         if message.is_err() {
