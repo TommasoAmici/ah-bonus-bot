@@ -135,7 +135,7 @@ impl NotificationDiscount {
         if self.future_discount == 1 {
             format!(
                 "[{}](https://www.ah.nl{}) will be on discount from {} to {}: {}",
-                self.name,
+                escape(self.name.as_str()),
                 self.url,
                 escape(self.discount_start_date.to_string().as_str()),
                 escape(self.discount_end_date.to_string().as_str()),
@@ -144,7 +144,7 @@ impl NotificationDiscount {
         } else {
             format!(
                 "[{}](https://www.ah.nl{}) is now on discount: {}",
-                self.name,
+                escape(self.name.as_str()),
                 self.url,
                 escape(self.discount.as_str())
             )
