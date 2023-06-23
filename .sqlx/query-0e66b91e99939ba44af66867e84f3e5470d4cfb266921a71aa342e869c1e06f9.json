@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT p.id,\n  p.name,\n  p.url,\n  p.image_url\nFROM products p\n  JOIN tracked_products tp ON p.id = tp.product_id\nWHERE chat_id = ?1\n",
+  "query": "SELECT p.id,\n  p.name,\n  p.url,\n  p.image_url\nFROM products p\n  JOIN tracked_products tp ON p.id = tp.product_id\nWHERE tp.chat_id = ?1\n",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "892018f29df89c220aec4923bb4e8eefccfd3fd59905b7e4ee1b1c656c21a30e"
+  "hash": "0e66b91e99939ba44af66867e84f3e5470d4cfb266921a71aa342e869c1e06f9"
 }
