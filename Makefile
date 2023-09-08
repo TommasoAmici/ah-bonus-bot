@@ -26,3 +26,5 @@ run:
 notify:
 	${RUN_BOT} --bin notify -- ${RUN_BOT_FLAGS}
 
+build:
+	cargo build
