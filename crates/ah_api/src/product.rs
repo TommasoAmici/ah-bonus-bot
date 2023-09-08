@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use url::Url;
+
+use crate::fetch::fetch;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -273,10 +276,9 @@ impl Product {
 }
 
 pub async fn get_product(product_id: &str) -> Result<ProductResponse, reqwest::Error> {
-    let url = format!(
-        "https://www.ah.nl/zoeken/api/products/product?webshopId={}",
-        product_id
-    );
+    let base_url = "https://www.ah.nl/zoeken/api/products/product";
+    let mut url = Url::parse(base_url).unwrap();
+    url.query_pairs_mut().append_pair("webshopId", product_id);
     log::info!("Fetching product: {}", url);
-    reqwest::get(url).await?.json::<ProductResponse>().await
+    fetch(url).await?.json::<ProductResponse>().await
 }

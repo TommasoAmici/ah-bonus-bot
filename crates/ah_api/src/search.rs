@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use crate::product;
+use crate::{fetch::fetch, product};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -104,5 +104,5 @@ pub async fn search_products(
         .append_pair("size", limit.to_string().as_str());
     log::info!("searching: {}", url);
 
-    reqwest::get(url).await?.json::<SearchResults>().await
+    fetch(url).await?.json::<SearchResults>().await
 }

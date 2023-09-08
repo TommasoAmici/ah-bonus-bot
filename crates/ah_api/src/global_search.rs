@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::fetch::fetch;
+
 #[derive(Serialize, Deserialize)]
 pub struct Icon {
     pub name: String,
@@ -48,5 +50,5 @@ pub async fn global_search(query: String, limit: u8) -> Result<SearchResponse, r
         .append_pair("limit", limit.to_string().as_str());
     log::info!("searching: {}", url);
 
-    reqwest::get(url).await?.json::<SearchResponse>().await
+    fetch(url).await?.json::<SearchResponse>().await
 }
