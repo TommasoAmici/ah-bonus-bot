@@ -25,9 +25,6 @@ async fn main() {
     pretty_env_logger::init();
 
     let args = Cli::parse();
-    let ah_client = AHClient::new()
-        .await
-        .expect("Failed to initalize AH client");
 
     let pool = SqlitePool::connect(&args.db_url)
         .await
@@ -39,6 +36,10 @@ async fn main() {
         .expect("Migrations failed");
 
     if !args.no_fetch {
+        let ah_client = AHClient::new()
+            .await
+            .expect("Failed to initalize AH client");
+
         get_current_prices(&pool, ah_client)
             .await
             .expect("Failed to get current prices");
