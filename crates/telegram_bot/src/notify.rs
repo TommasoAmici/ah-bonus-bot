@@ -22,12 +22,12 @@ pub struct Cli {
 
 #[tokio::main]
 async fn main() {
+    pretty_env_logger::init();
+
     let args = Cli::parse();
     let ah_client = AHClient::new()
         .await
         .expect("Failed to initalize AH client");
-
-    pretty_env_logger::init();
 
     let pool = SqlitePool::connect(&args.db_url)
         .await
