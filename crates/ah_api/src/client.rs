@@ -9,6 +9,7 @@ pub struct AHClient {
 
 impl AHClient {
     pub async fn new() -> Result<Self, ()> {
+        log::info!("Initializing AH client");
         let client = reqwest::ClientBuilder::new()
             .cookie_store(true)
             .build()
