@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create changelog
         id: changelog
-        uses: TriPSs/conventional-changelog-action@v3
+        uses: TriPSs/conventional-changelog-action@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           git-push: "false"
