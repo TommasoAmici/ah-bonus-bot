@@ -1,6 +1,6 @@
 use std::{collections::HashSet, str::FromStr};
 
-use ah_api::search::search_products;
+use ah_api::client::AHClient;
 
 use clap::Parser;
 use sqlx::SqlitePool;
@@ -53,6 +53,10 @@ async fn main() {
         .await
         .expect("Migrations failed");
 
+    let ah_client = AHClient::new()
+        .await
+        .expect("Failed to initialize AH client");
+
     let bot = Bot::from_env().throttle(Limits::default());
     bot.set_my_commands(Command::bot_commands())
         .await
@@ -68,7 +72,7 @@ async fn main() {
         .branch(callback_query_handler);
 
     Dispatcher::builder(bot, handler)
-        .dependencies(dptree::deps![pool])
+        .dependencies(dptree::deps![pool, ah_client])
         .enable_ctrlc_handler()
         .build()
         .dispatch()
@@ -96,6 +100,7 @@ async fn callback_query_handler(
     bot: Throttle<Bot>,
     q: CallbackQuery,
     pool: SqlitePool,
+    ah_client: AHClient,
 ) -> ResponseResult<()> {
     let text = q.data;
     if text.is_none() {
@@ -113,7 +118,7 @@ async fn callback_query_handler(
     let parsed_action: Action = action.parse::<Action>().expect("Invalid action");
 
     match parsed_action {
-        Action::TrackProduct => track_product(&bot, &message, &pool, product_id).await,
+        Action::TrackProduct => track_product(&bot, &message, &pool, &ah_client, product_id).await,
         Action::StopTrackingProduct => {
             stop_tracking_product(&bot, &message, &pool, product_id).await
         }
@@ -148,6 +153,7 @@ async fn track_product(
     bot: &Throttle<Bot>,
     msg: &Message,
     pool: &SqlitePool,
+    ah_client: &AHClient,
     product_id: &str,
 ) -> ResponseResult<()> {
     let chat_id = &msg.chat.id;
@@ -157,7 +163,7 @@ async fn track_product(
         chat_id.0
     );
 
-    let product_response = ah_api::product::get_product(product_id).await?;
+    let product_response = ah_client.get_product(product_id).await?;
     let product = product_response
         .card
         .products
@@ -249,10 +255,11 @@ async fn commands_handler(
     msg: Message,
     cmd: Command,
     pool: SqlitePool,
+    ah_client: AHClient,
 ) -> ResponseResult<()> {
     match cmd {
         Command::Help | Command::Start => help_endpoint(bot, msg).await,
-        Command::Search(query) => search_endpoint(bot, msg, &pool, &query).await,
+        Command::Search(query) => search_endpoint(bot, msg, &pool, &ah_client, &query).await,
         Command::List => list_endpoint(bot, msg, &pool).await,
     }
 }
@@ -298,10 +305,11 @@ async fn search_endpoint(
     bot: Throttle<Bot>,
     msg: Message,
     pool: &SqlitePool,
+    ah_client: &AHClient,
     query: &String,
 ) -> ResponseResult<()> {
     log::info!("search: query={}", query);
-    let search_results = search_products(query, 3).await?;
+    let search_results = ah_client.search_products(query, 3).await?;
 
     let tracked_products = db::get_all_tracked_products_ids(pool, msg.chat.id.0)
         .await
