@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use url::Url;
-
-use crate::fetch::fetch;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -273,12 +270,4 @@ impl Product {
     pub fn get_price_for_db(&self) -> u32 {
         (&self.price.now * 100.0) as u32
     }
-}
-
-pub async fn get_product(product_id: &str) -> Result<ProductResponse, reqwest::Error> {
-    let base_url = "https://www.ah.nl/zoeken/api/products/product";
-    let mut url = Url::parse(base_url).unwrap();
-    url.query_pairs_mut().append_pair("webshopId", product_id);
-    log::info!("Fetching product: {}", url);
-    fetch(url).await?.json::<ProductResponse>().await
 }

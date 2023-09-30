@@ -1,4 +1,4 @@
-use ah_api::product::get_product;
+use ah_api::client::AHClient;
 use clap::Parser;
 use sqlx::SqlitePool;
 use std::{thread, time};
@@ -23,6 +23,9 @@ pub struct Cli {
 #[tokio::main]
 async fn main() {
     let args = Cli::parse();
+    let ah_client = AHClient::new()
+        .await
+        .expect("Failed to initalize AH client");
 
     pretty_env_logger::init();
 
@@ -36,7 +39,7 @@ async fn main() {
         .expect("Migrations failed");
 
     if !args.no_fetch {
-        get_current_prices(&pool)
+        get_current_prices(&pool, ah_client)
             .await
             .expect("Failed to get current prices");
     }
@@ -46,7 +49,7 @@ async fn main() {
         .expect("Failed to notify users of discounts");
 }
 
-async fn get_current_prices(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+async fn get_current_prices(pool: &SqlitePool, ah_client: AHClient) -> Result<(), sqlx::Error> {
     log::info!("Fetching current prices");
 
     let product_ids = db::get_all_product_ids(pool).await?;
@@ -57,7 +60,7 @@ async fn get_current_prices(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         // be respectful to the API
         thread::sleep(one_sec);
 
-        let product = get_product(product_id.to_string().as_str()).await;
+        let product = ah_client.get_product(product_id.to_string().as_str()).await;
         match product {
             Ok(resp) => {
                 db::insert_product_history(

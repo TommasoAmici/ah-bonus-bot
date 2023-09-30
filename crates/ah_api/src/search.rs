@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use url::Url;
 
-use crate::{fetch::fetch, product};
+use crate::product;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -91,18 +90,4 @@ pub struct Price {
     pub min: f64,
     pub max: f64,
     pub label: String,
-}
-
-pub async fn search_products(
-    query: &String,
-    limit: usize,
-) -> Result<SearchResults, reqwest::Error> {
-    let base_url = "https://www.ah.nl/zoeken/api/products/search";
-    let mut url = Url::parse(base_url).unwrap();
-    url.query_pairs_mut()
-        .append_pair("query", &query)
-        .append_pair("size", limit.to_string().as_str());
-    log::info!("searching: {}", url);
-
-    fetch(url).await?.json::<SearchResults>().await
 }
