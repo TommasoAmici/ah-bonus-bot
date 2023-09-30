@@ -73,8 +73,8 @@ async fn get_current_prices(pool: &SqlitePool, ah_client: AHClient) -> Result<()
                 )
                 .await?;
             }
-            Err(_) => {
-                log::error!("Failed to get product with id {}", product_id);
+            Err(err) => {
+                log::error!("Failed to get product with id {}: {}", product_id, err);
                 continue;
             }
         }
