@@ -24,7 +24,7 @@ sqlx = { version = "0.7.3", features = [
 time = "0.3"
 
 # CLI arguments
-clap = { version = "4.4.11", features = ["derive"] }
+clap = { version = "4.4.12", features = ["derive"] }
 
 # Telegram bot
 teloxide = { version = "0.12", features = ["macros", "throttle"] }
