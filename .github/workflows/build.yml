@@ -59,7 +59,7 @@ jobs:
           BODY: ${{ steps.changelog.outputs.clean_changelog }}
 
       - name: rsync bot
-        uses: burnett01/rsync-deployments@5.2
+        uses: burnett01/rsync-deployments@8.0.5
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
         with:
           switches: -avzrP
